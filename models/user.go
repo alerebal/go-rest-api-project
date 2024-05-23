@@ -1,6 +1,9 @@
 package models
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/alerebal/go-rest-api/db"
 	"github.com/alerebal/go-rest-api/utils"
 )
@@ -18,9 +21,7 @@ func (u User) Save() error {
 		return err
 	}
 	defer stmt.Close()
-
 	hashedPassword, err := utils.HashPassword(u.Password)
-
 	if err != nil {
 		return err
 	}
@@ -34,8 +35,8 @@ func (u User) Save() error {
 	// }
 	// u.ID = userId
 
+	fmt.Println("hashed password to create user", hashedPassword)
 	_, err = stmt.Exec(u.Email, hashedPassword)
-
 	return err
 }
 
@@ -71,16 +72,20 @@ func GetUserById(id int64) (*User, error) {
 func (u *User) Delete() error {
 	query := "DELETE FROM users WHERE id = ?"
 	_, err := db.DB.Exec(query, u.ID)
-
 	return err
 }
 
-func (u User) ValidateCredentials() error {
-	query := "SELECT password FROM users WHERE id = ?"
+func (u *User) ValidateCredentials() error {
+	query := "SELECT id, password FROM users WHERE email = ?"
 	row := db.DB.QueryRow(query, u.Email)
 	var retrievedPassword string
-	err := row.Scan(&retrievedPassword)
+	err := row.Scan(&u.ID, &retrievedPassword)
 	if err != nil {
-		return err
+		return errors.New("credentials invalid")
 	}
+	passwordIsValid := utils.CheckPasswordHash(u.Password, retrievedPassword)
+	if !passwordIsValid {
+		return errors.New("credentials invalid")
+	}
+	return nil
 }

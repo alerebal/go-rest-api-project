@@ -1,0 +1,10 @@
+POST http://localhost:8080/events
+Content-Type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRvc0Bkb3MiLCJleHAiOjE3MTY0NzE5MDYsInVzZXJJZCI6MX0.x9Pyd3KzxZiSkyOO0D8AroRA75e7YULzb0wSLeTzO08
+
+{
+    "name": "an event",
+    "description": "the description",
+    "location": "destiny",
+    "dateTime": "2025-01-01T15:30:00Z"    
+}

@@ -1,0 +1,10 @@
+PUT http://localhost:8080/events/7
+Content-Type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRvc0Bkb3MiLCJleHAiOjE3MTY0Njc5NzcsInVzZXJJZCI6Mn0.QhV2jerqniXneznX4zzKAFDgtEkzqL9uKhu9MjHdz6w
+
+{
+    "name": "updating",
+    "description": "description updated",
+    "location": "Saint Michel",
+    "dateTime": "2025-01-01T15:30:00Z"
+}

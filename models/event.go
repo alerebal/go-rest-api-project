@@ -12,10 +12,10 @@ type Event struct {
 	Description string `binding:"required"`
 	Location    string `binding:"required"`
 	DateTime    time.Time
-	UserID      int
+	UserID      int64
 }
 
-func (e Event) Save() error {
+func (e *Event) Save() error {
 	query := `
 	INSERT INTO events (name, description, location, dateTime, user_id)
 	VALUES (?, ?, ?, ?, ?)
@@ -25,12 +25,12 @@ func (e Event) Save() error {
 		return err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(e.Name, e.Description, e.Location, e.DateTime, e.UserID)
-	// if err != nil {
-	// 	return err
-	// }
-	// _, err = result.LastInsertId()
-	// e.ID = id
+	result, err := stmt.Exec(e.Name, e.Description, e.Location, e.DateTime, e.UserID)
+	if err != nil {
+		return err
+	}
+	id, err := result.LastInsertId()
+	e.ID = id
 	return err
 }
 
@@ -41,9 +41,7 @@ func GetAllEvents() ([]Event, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var events []Event
-
 	for rows.Next() {
 		var event Event
 		err := rows.Scan(&event.ID, &event.Name, &event.Description,
@@ -53,7 +51,6 @@ func GetAllEvents() ([]Event, error) {
 		}
 		events = append(events, event)
 	}
-
 	return events, nil
 }
 
@@ -76,13 +73,11 @@ func (event Event) Update() error {
 	SET name = ?, description = ?, location = ?, dateTime = ?
 	WHERE id = ?
 	`
-
 	stmt, err := db.DB.Prepare(query)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-
 	_, err = stmt.Exec(event.Name, event.Description, event.Location, event.DateTime, event.ID)
 	return err
 }
@@ -90,6 +85,22 @@ func (event Event) Update() error {
 func (event Event) Delete() error {
 	query := `DELETE FROM events WHERE id = ?`
 	_, err := db.DB.Exec(query, event.ID)
+	return err
+}
 
+func (event Event) Register(userId int64) error {
+	query := "INSERT INTO registrations(event_id, user_id) VALUES (?,?)"
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(event.ID, userId)
+	return err
+}
+
+func (event Event) CancelRegistration(userId int64) error {
+	query := "DELETE FROM registrations WHERE event_id = ? AND user_id = ?"
+	_, err := db.DB.Exec(query, event.ID, userId)
 	return err
 }

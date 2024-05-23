@@ -36,12 +36,12 @@ func getEvent(ctx *gin.Context) {
 func createEvent(ctx *gin.Context) {
 	var event models.Event
 	err := ctx.ShouldBindJSON(&event)
-
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse data"})
 		return
 	}
-
+	userId := ctx.GetInt64("userId")
+	event.UserID = userId
 	err = event.Save()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -57,20 +57,21 @@ func updateEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse event id"})
 		return
 	}
-
-	_, err = models.GetEventById(eventId)
+	userId := ctx.GetInt64("userId")
+	event, err := models.GetEventById(eventId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not fetch the event"})
 		return
 	}
-
+	if userId != event.UserID {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized to update the event"})
+	}
 	var updatedEvent models.Event
 	err = ctx.ShouldBindJSON(&updatedEvent)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse data"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse data required"})
 		return
 	}
-
 	updatedEvent.ID = eventId
 	err = updatedEvent.Update()
 	if err != nil {
@@ -86,18 +87,14 @@ func deleteEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse event id"})
 		return
 	}
-
-	_, err = models.GetEventById(eventId)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not fetch the event"})
-		return
-	}
-
+	userId := ctx.GetInt64("userId")
 	event, err := models.GetEventById(eventId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not fetch the event"})
 	}
-
+	if userId != event.UserID {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized to delete the event"})
+	}
 	err = event.Delete()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not delete event"})
