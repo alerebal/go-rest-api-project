@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -24,7 +25,9 @@ func GenerateToken(email string, userId int64) (string, error) {
 }
 
 func VerifyToken(token string) (int64, error) {
-	parsedToken, err := jwt.Parse(token, func(jwtToken *jwt.Token) (interface{}, error) {
+	// token from postman comes as Bearer <Token> so I need this to the authorization to work
+	tokenNoBearer := strings.Split(token, " ")[1]
+	parsedToken, err := jwt.Parse(tokenNoBearer, func(jwtToken *jwt.Token) (interface{}, error) {
 		_, ok := jwtToken.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
 			return nil, errors.New("unexpected signing method")
